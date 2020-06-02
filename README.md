@@ -12,6 +12,8 @@ I'm not going to heavily maintain this project so expect certain areas to break 
 
 Since WPI currently has the course reports behind a login wall I will assume they don't want this data to be accesible by anyone outside of the school so I will not provide a copy of this data here or any way to obtain the data unless you are a student of WPI. To obtain a copy of the data yourself you must run data.py which will scrape all the data from the WPI site, join it into one big dataset, and add calculated easy values to the dataset. Notice: This currently functions all in memory so if this still works many years later it may break if all the data can not fit into main memory.  
 
+Setup has a time delay built into each request to try and make it less like a rapid deluge of requests so if you want to dramatically speed the program up just remove that delay but be warned WPI may not like that and take notice of it. You could always multithread the requests to rapidly speed it up but the code currently is not fully set up for that.  
+
 To run: `python data.py CAS_TOKEN [gradeWeight] [timeWeight]`  
 
 Where CAS_TOKEN is your assigned cas security token (explained below), gradeWeight is the weight you want to assign to how many people say they get good grades (default is 1.0, higher means it is more important), and timeWeight is the weight you want to assign to how many hours people say the course takes them outside of class (default is 1.0, higher means it is more important). *Note you must have both a gradeWeight and a timeWeight if you want to use them.*  
