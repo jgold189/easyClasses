@@ -144,12 +144,100 @@ class classesData:
         return text
         
 
+#TODO: TEST THIS
+#Utility class to join together all files and update the entries with an easy value
+#This class could be simplified and joined together with the previous one but I already wrote the code in a different format so I am being lazy and just putting it here. Maybe I will one day rework it
+#Joins and updates are also done the quick way in memory so if the data files actually grow big enough this won't work. Won't be a problem for a while though
 class joinUpdate:
+    
+    #Set the year and weights which will all be used later
     def __init__(self, years, gradeWeight, timeWeight):
-        pass
+        self.years = years
+        self.gradeWeight = gradeWeight
+        self.timeWeight = timeWeight
 
+    #Simple driver to call the functions
     def joinAndUpdate(self):
-        pass
+        self.classJoinUpdate()
+        self.profJoin()
+
+    #Joins all the years together into one big data set and updates them all with easy scores
+    def classJoinUpdate(self):
+        classFileString = "Classes.json"
+        #Features per question
+        FPQ = 9
+        allDataSplit = []
+        allData = {}
+
+        #For every year open up the data file and put it into the split data array
+        for year in self.years:
+            f = open(year + classFileString, "r")
+            fileJson = json.load(f)
+            f.close()
+            allDataSplit.append(fileJson)
+
+        #For every set of data in the split data, if the course is in the new dictionary then just tack it on, otherwise set it new
+        for yearData in allDataSplit:
+            for course in yearData:
+                if course in allData:
+                    allData[course] += yearData[course]
+                else:
+                    allData[course] = yearData[course]
+        
+
+        #For every course find the needed info to compute and add an easy value
+        for course in allData:
+            for indiv in allData[course]:
+                #Split up all the ratings
+                ratings = indiv["courseRatings"].split(",")
+
+                #Find the time avg value hidden in the data using the FPQ
+                timeAvg = float(ratings[FPQ+(FPQ*18)-1])
+
+                #Get all the grade ratings and convert them all into ints
+                gradeAvg = list(map(int, ratings[(1+(FPQ*17)):(5+(FPQ*17))]))
+                #Compute the average grade if possible
+                if sum(gradeAvg) == 0:
+                    gradeAvg = 0
+                else:
+                    gradeAvg = (gradeAvg[0] + (gradeAvg[1] * 2) + (gradeAvg[2] * 3) + (gradeAvg[3] * 4)) / sum(gradeAvg)
+
+                #compute the easy value if possible, if either component is 0 then this won't be a valid easy number and should be marked as such
+                if gradeAvg == 0 or timeAvg == 0:
+                    easy = -1
+                else:
+                    easy = round((self.gradeWeight * gradeAvg) * (self.timeWeight * timeAvg), 2)
+
+                indiv["easy"] = easy
+
+        #Save it out
+        fout = open("allClassesEasy.json", "w")
+        json.dump(allData, fout, indent = 4)
+        fout.close()
+
+    #Joins all the years together into one big list of professors
+    def profJoin(self):
+        profFileString = "Prof.json"
+        allDataSplit = []
+        allData = {}
+
+        #Same as with classes above
+        for year in self.years:
+            f = open(year + profFileString, "r")
+            fileJson = json.load(f)
+            f.close()
+            allDataSplit.append(fileJson)
+
+        #For every set of data in the split data, if the prof is not in the new dictionary then set it new
+        for yearData in allDataSplit:
+            for prof in yearData:
+                if prof not in allData:
+                    allData[prof] = yearData[prof]
+
+        #Save it out
+        fout = open("allProf.json", "w")
+        json.dump(allData, fout, indent = 4)
+        fout.close()
 
 
 if __name__ == "__main__":
@@ -173,5 +261,5 @@ if __name__ == "__main__":
         #Create an object with that year and cookie and then get its info
         classesData(year, COOKIE).getAllInfo()
     
-    joinerUpdater = joinUpdate(years, gradeWeight, timeWeight)
-    joinerUpdater.joinAndUpdate()
+    #Create an object with the years and weights and then have it join and update
+    joinUpdate(years, gradeWeight, timeWeight).joinAndUpdate()
